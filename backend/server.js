@@ -14,11 +14,27 @@ const bookingRoutes = require('./routes/bookings');
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  process.env.CLIENT_URL
+].filter(Boolean);
+
+const corsOriginFn = function (origin, callback) {
+  if (!origin) return callback(null, true);
+  if (allowedOrigins.includes(origin)) {
+    callback(null, true);
+  } else {
+    callback(new Error("CORS not allowed for this origin: " + origin));
+  }
+};
+
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: "*",
+    origin: corsOriginFn,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
@@ -27,7 +43,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: "",
+  origin: corsOriginFn,
   credentials: true,
 }));
 app.use(express.json());
